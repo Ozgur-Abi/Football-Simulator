@@ -3,7 +3,6 @@
 A football league simulator built for the Insider One interview project.
 
 **Live demo:** https://football-simulator-6rgn.onrender.com
-**Detailed design notes:** [TECHNICAL.md](TECHNICAL.md)
 
 ## Stack
 
@@ -18,12 +17,29 @@ A football league simulator built for the Insider One interview project.
 ## Local Setup
 
 ```bash
-git clone <repo-url> && cd insider-cl
-composer install && npm install
+# Download the project
+git clone https://github.com/Ozgur-Abi/Football-Simulator.git && cd Football-Simulator
+
+# Install PHP packages (like npm install, but for PHP)
+composer install
+
+# Install JS packages
+npm install
+
+# Create the local config file and generate an encryption key
 cp .env.example .env && php artisan key:generate
-touch database/database.sqlite && php artisan migrate:fresh --seed
-php artisan serve   # terminal 1
-npm run dev         # terminal 2
+
+# Create the SQLite database file (just an empty file)
+touch database/database.sqlite
+
+# Run database migrations (create tables) and seed with teams + fixtures
+php artisan migrate:fresh --seed
+
+# Start the PHP dev server  →  http://127.0.0.1:8000
+php artisan serve
+
+# In a second terminal: start Vite (compiles Vue + CSS with hot reload)
+npm run dev
 ```
 
 Open `http://127.0.0.1:8000`.
@@ -61,11 +77,15 @@ home_goals = poisson(λ_home)
 away_goals = poisson(λ_away)
 ```
 
-`poisson(λ)` uses Knuth's algorithm. Average match produces ~3 goals. Upsets occur naturally via Poisson tails.
+`poisson(λ)` uses Knuth's algorithm. Average match produces ~3 goals.
+Upsets occur naturally via Poisson tails.
 
 ## Championship Predictions
 
-Monte Carlo: simulate all remaining fixtures **2,000 times**, count how often each team wins. Reuses the same Poisson simulator — prediction physics can never drift from match physics. Predictions are shown from **week 1** onwards. Short-circuits to 100 % / 0 % when the title is mathematically clinched.
+Monte Carlo: simulate all remaining fixtures **2,000 times**, count how often each team wins.
+Reuses the same Poisson simulator — prediction physics can never drift from match physics.
+Predictions are shown from **week 1** onwards.
+Short-circuits to 100% / 0% when the title is mathematically clinched.
 
 ## League Format
 
