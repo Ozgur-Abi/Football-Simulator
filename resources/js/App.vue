@@ -37,6 +37,7 @@
           :standings="state.standings"
           :loading="loading"
         />
+        <DetailsPanel :teams="state.teams" />
       </div>
 
       <!-- Right: match results -->
@@ -54,6 +55,7 @@
 import { ref, computed, onMounted } from 'vue';
 import LeagueTable      from './components/LeagueTable.vue';
 import PredictionsPanel from './components/PredictionsPanel.vue';
+import DetailsPanel     from './components/DetailsPanel.vue';
 import MatchResults     from './components/MatchResults.vue';
 import ControlButtons   from './components/ControlButtons.vue';
 import * as api         from './api/league.js';

@@ -99,6 +99,11 @@ class LeagueOrchestrator
         return [
             'current_week' => $currentWeek,
             'total_weeks'  => $totalWeeks,
+            'teams'        => $teams->map(fn (Team $t) => [
+                'id'    => $t->id,
+                'name'  => $t->name,
+                'power' => $t->power,
+            ])->values(),
             'standings'    => $standings->map(fn ($row) => $row->toArray())->values(),
             'matches'      => $matchesByWeek,
             'predictions'  => $predictions,
