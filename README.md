@@ -2,99 +2,79 @@
 
 A football league simulator built for the Insider One interview project.
 
+**Live demo:** https://football-simulator-6rgn.onrender.com
+**Detailed design notes:** [TECHNICAL.md](TECHNICAL.md)
+
 ## Stack
 
 | Layer | Tech |
 |-------|------|
 | Backend | PHP 8.4 / Laravel 13 |
 | Frontend | Vue 3 (Composition API) + Vite + Tailwind CSS 4 |
-| Database | SQLite (zero-config, file-based) |
+| Database | SQLite |
 | Tests | PHPUnit 12 |
-| Deploy | Railway |
+| Deploy | Render (Docker, free tier) |
 
 ## Local Setup
 
 ```bash
 git clone <repo-url> && cd insider-cl
-
-# PHP dependencies
-composer install
-
-# JS dependencies
-npm install
-
-# Environment
-cp .env.example .env
-php artisan key:generate
-
-# Database
-touch database/database.sqlite
-php artisan migrate:fresh --seed
-
-# Start servers (two terminals)
-php artisan serve          # http://127.0.0.1:8000
-npm run dev                # Vite HMR
+composer install && npm install
+cp .env.example .env && php artisan key:generate
+touch database/database.sqlite && php artisan migrate:fresh --seed
+php artisan serve   # terminal 1
+npm run dev         # terminal 2
 ```
 
-Then open `http://127.0.0.1:8000`.
+Open `http://127.0.0.1:8000`.
 
-## Running Tests
+## Tests
 
 ```bash
-php artisan test
+php artisan test   # 18 tests, all pass
 ```
-
-18 tests — all pass.
-
-## Key Design Decisions
-
-### Architecture: Laravel API + Vue 3 SPA
-The backend exposes a JSON API (`/api/league/*`). The Vue SPA mounts on a single Blade view. This is the standard pattern for testable Laravel applications — you test JSON endpoints, not rendered HTML.
-
-### OOP Services (`app/Services/League/`)
-Each service has one responsibility:
-
-| Class | Responsibility |
-|-------|---------------|
-| `FixtureGenerator` | Circle-method round-robin schedule (double leg) |
-| `MatchSimulator` | Poisson-goal simulation with 10% home advantage |
-| `StandingsCalculator` | Pure function over played matches — standings are **derived, never stored** |
-| `ChampionshipPredictor` | Monte Carlo (5,000 runs) reusing `MatchSimulator` |
-| `LeagueOrchestrator` | Façade the controller calls |
-
-### Match Simulation Formula
-```
-homeStrength = home.power × 1.10   (10% home boost)
-awayStrength = away.power
-λ_home = (homeStrength / total) × 3.0
-λ_away = (awayStrength / total) × 3.0
-goals  = poisson(λ)                 (Knuth algorithm)
-```
-This matches ~2.8 goals/game (real PL average), produces natural upsets via Poisson tails, and respects power gaps.
-
-### Championship Predictions
-Monte Carlo approach: simulate the remaining fixtures 5,000 times, count how often each team finishes first. This reuses the simulator — prediction logic can never drift from match logic. Short-circuits to 100%/0% when a title is mathematically clinched.
-
-### Standings Derivation
-Standings are computed fresh from played matches on every request. Editing a match result therefore can't desync the table — there is nothing to desync.
-
-### Vue Component Pattern
-Container/presentational split: `App.vue` owns all state and calls the API; `LeagueTable`, `MatchResults`, `PredictionsPanel`, `ControlButtons`, and `EditableScore` are dumb children that receive props and emit events.
 
 ## Teams
 
-| Team | Power |
-|------|-------|
-| Galatasaray | 88 |
-| Fenerbahçe | 86 |
-| Beşiktaş | 78 |
-| Trabzonspor | 75 |
+| Team | Power | Effective home power | Effective away power |
+|------|------:|---------------------:|---------------------:|
+| Galatasaray | 88 | 96.8 | 88 |
+| Fenerbahçe | 86 | 94.6 | 86 |
+| Beşiktaş | 78 | 85.8 | 78 |
+| Trabzonspor | 75 | 82.5 | 75 |
+| Başakşehir | 72 | 79.2 | 72 |
+| Adana Demirspor | 69 | 75.9 | 69 |
 
-Powers are tunable in `database/seeders/TeamSeeder.php`.
+Effective home power = `power × 1.10`. Powers are tunable in `TeamSeeder.php`.
+
+## Match Simulation
+
+```
+homeStrength = home.power × 1.10
+awayStrength = away.power
+total        = homeStrength + awayStrength
+
+λ_home = (homeStrength / total) × 3.0   → expected home goals
+λ_away = (awayStrength / total) × 3.0   → expected away goals
+
+home_goals = poisson(λ_home)
+away_goals = poisson(λ_away)
+```
+
+`poisson(λ)` uses Knuth's algorithm. Average match produces ~3 goals. Upsets occur naturally via Poisson tails.
+
+## Championship Predictions
+
+Monte Carlo: simulate all remaining fixtures **2,000 times**, count how often each team wins. Reuses the same Poisson simulator — prediction physics can never drift from match physics. Predictions are shown from **week 1** onwards. Short-circuits to 100 % / 0 % when the title is mathematically clinched.
 
 ## League Format
 
-- 4 teams, double round-robin → **6 matchdays, 12 matches**
-- Premier League scoring: 3 / 1 / 0 (win / draw / loss)
-- Tiebreaker: points → goal difference → goals scored
-- Championship predictions appear from **week 4** onwards (last 3 weeks)
+6 teams, double round-robin → **10 matchdays, 30 matches** (3 per week).
+Scoring: 3 / 1 / 0. Tiebreaker: points → goal difference → goals scored.
+
+## Architecture
+
+- **Laravel JSON API** + **Vue 3 SPA** on a single Blade page.
+- Services in `app/Services/League/`: `FixtureGenerator`, `MatchSimulator`, `StandingsCalculator`, `ChampionshipPredictor`, `LeagueOrchestrator`.
+- Standings are **derived from matches on every request** — editing a result can never corrupt the table.
+- Vue uses a **container / presentational** split: `App.vue` owns state; all other components are stateless.
