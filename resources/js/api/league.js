@@ -8,3 +8,4 @@ export const playAll     = ()           => http.post('/play-all').then(r => r.da
 export const resetLeague = ()           => http.post('/reset').then(r => r.data);
 export const editMatch   = (id, h, a)   => http.patch(`/match/${id}`, { home_goals: h, away_goals: a }).then(r => r.data);
 export const addTeam     = (name, power) => http.post('/team', { name, power }).then(r => r.data);
+export const removeTeam  = (id)         => http.delete(`/team/${id}`).then(r => r.data);

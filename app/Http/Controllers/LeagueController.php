@@ -59,4 +59,14 @@ class LeagueController extends Controller
         $this->league->addTeam($data['name'], $data['power']);
         return response()->json($this->league->getState());
     }
+
+    public function removeTeam(int $id): JsonResponse
+    {
+        if (Team::count() <= 2) {
+            return response()->json(['message' => 'A league needs at least 2 teams.'], 422);
+        }
+
+        $this->league->removeTeam($id);
+        return response()->json($this->league->getState());
+    }
 }

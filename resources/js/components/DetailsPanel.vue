@@ -8,13 +8,22 @@
           <th class="text-left py-1 font-medium">Team</th>
           <th class="text-right py-1 font-medium">Base</th>
           <th class="text-right py-1 font-medium">Home (×1.10)</th>
+          <th class="w-6"></th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="t in sortedTeams" :key="t.id" class="border-b border-gray-800">
+        <tr v-for="t in sortedTeams" :key="t.id" class="border-b border-gray-800 group">
           <td class="py-1">{{ t.name }}</td>
           <td class="text-right py-1 font-mono">{{ t.power }}</td>
           <td class="text-right py-1 font-mono text-orange-300">{{ (t.power * 1.10).toFixed(1) }}</td>
+          <td class="text-right py-1">
+            <button
+              v-if="canRemoveTeam"
+              @click="$emit('remove-team', t.id, t.name)"
+              class="text-gray-600 hover:text-red-400 transition opacity-0 group-hover:opacity-100"
+              :title="`Remove ${t.name}`"
+            >✕</button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -102,13 +111,14 @@ const props = defineProps({
   teams: { type: Array, required: true },
 });
 
-const emit = defineEmits(['add-team']);
+const emit = defineEmits(['add-team', 'remove-team']);
 
 const sortedTeams = computed(() =>
   [...props.teams].sort((a, b) => b.power - a.power)
 );
 
-const canAddTeam = computed(() => props.teams.length < 12);
+const canAddTeam    = computed(() => props.teams.length < 12);
+const canRemoveTeam = computed(() => props.teams.length > 2);
 
 const showForm = ref(false);
 const name     = ref('');

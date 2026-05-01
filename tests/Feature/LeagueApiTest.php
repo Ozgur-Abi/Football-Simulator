@@ -109,4 +109,31 @@ class LeagueApiTest extends TestCase
         $this->postJson('/api/league/team', ['name' => 'NewTeam', 'power' => 150])
             ->assertStatus(422);
     }
+
+    public function test_remove_team_deletes_team_and_resets_league(): void
+    {
+        $this->postJson('/api/league/play-week');
+        $teamId = \App\Models\Team::where('name', 'Adana Demirspor')->value('id');
+
+        $res = $this->deleteJson("/api/league/team/{$teamId}");
+
+        $res->assertOk();
+        $this->assertCount(5, $res->json('teams'));
+        $this->assertEquals(0, $res->json('current_week'));
+        $this->assertDatabaseMissing('teams', ['id' => $teamId]);
+    }
+
+    public function test_remove_team_blocked_when_only_two_teams_remain(): void
+    {
+        // Drop down to 2 teams (one delete at a time so we don't hit the floor early)
+        $remainingIds = \App\Models\Team::orderByDesc('id')->pluck('id')->take(4)->values();
+        foreach ($remainingIds as $id) {
+            $this->deleteJson("/api/league/team/{$id}")->assertOk();
+        }
+        $this->assertEquals(2, \App\Models\Team::count());
+
+        // Removing one more should be blocked
+        $lastId = \App\Models\Team::orderBy('id')->value('id');
+        $this->deleteJson("/api/league/team/{$lastId}")->assertStatus(422);
+    }
 }

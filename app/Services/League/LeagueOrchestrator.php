@@ -120,4 +120,12 @@ class LeagueOrchestrator
         Team::create(['name' => $name, 'power' => $power]);
         $this->init();
     }
+
+    public function removeTeam(int $id): void
+    {
+        // Drop all fixtures first to release foreign keys, then delete the team.
+        FixtureMatch::query()->delete();
+        Team::findOrFail($id)->delete();
+        $this->init();
+    }
 }

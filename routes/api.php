@@ -10,4 +10,5 @@ Route::prefix('league')->group(function () {
     Route::post('reset',         [LeagueController::class, 'reset']);
     Route::patch('match/{id}',   [LeagueController::class, 'editMatch']);
     Route::post('team',          [LeagueController::class, 'addTeam']);
+    Route::delete('team/{id}',   [LeagueController::class, 'removeTeam']);
 });

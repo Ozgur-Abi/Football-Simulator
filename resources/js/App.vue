@@ -37,7 +37,7 @@
           :standings="state.standings"
           :loading="loading"
         />
-        <DetailsPanel :teams="state.teams" @add-team="onAddTeam" />
+        <DetailsPanel :teams="state.teams" @add-team="onAddTeam" @remove-team="onRemoveTeam" />
       </div>
 
       <!-- Right: match results -->
@@ -89,6 +89,13 @@ const onAddTeam   = (name, power) => {
     if (!confirm('Adding a team resets the league. All played matches will be lost. Continue?')) return;
   }
   load(() => api.addTeam(name, power));
+};
+const onRemoveTeam = (id, name) => {
+  const playedMsg = state.value && state.value.current_week > 0
+    ? ' All played matches will be lost.'
+    : '';
+  if (!confirm(`Remove ${name}?${playedMsg}`)) return;
+  load(() => api.removeTeam(id));
 };
 
 onMounted(() => load(api.getState));
