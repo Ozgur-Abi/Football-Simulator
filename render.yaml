@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: football-simulator
+    runtime: php
+    buildCommand: >-
+      composer install --no-dev --optimize-autoloader &&
+      cp .env.example .env &&
+      php artisan key:generate --force &&
+      touch database/database.sqlite &&
+      php artisan migrate --force --seed &&
+      php artisan config:cache &&
+      php artisan route:cache
+    startCommand: php -S 0.0.0.0:$PORT -t public
+    envVars:
+      - key: APP_NAME
+        value: "Football Simulator"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
