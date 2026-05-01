@@ -37,7 +37,7 @@
           :standings="state.standings"
           :loading="loading"
         />
-        <DetailsPanel :teams="state.teams" />
+        <DetailsPanel :teams="state.teams" @add-team="onAddTeam" />
       </div>
 
       <!-- Right: match results -->
@@ -84,6 +84,12 @@ const onNextWeek  = () => load(api.playWeek);
 const onPlayAll   = () => load(api.playAll);
 const onReset     = () => load(api.resetLeague);
 const onEditMatch = (id, h, a) => load(() => api.editMatch(id, h, a));
+const onAddTeam   = (name, power) => {
+  if (state.value && state.value.current_week > 0) {
+    if (!confirm('Adding a team resets the league. All played matches will be lost. Continue?')) return;
+  }
+  load(() => api.addTeam(name, power));
+};
 
 onMounted(() => load(api.getState));
 </script>

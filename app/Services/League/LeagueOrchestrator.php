@@ -114,4 +114,10 @@ class LeagueOrchestrator
     {
         $this->init();
     }
+
+    public function addTeam(string $name, int $power): void
+    {
+        Team::create(['name' => $name, 'power' => $power]);
+        $this->init();
+    }
 }

@@ -79,4 +79,34 @@ class LeagueApiTest extends TestCase
         $res->assertOk();
         $this->assertEquals(0, $res->json('current_week'));
     }
+
+    public function test_add_team_adds_team_and_resets_league(): void
+    {
+        $this->postJson('/api/league/play-week');
+
+        $res = $this->postJson('/api/league/team', [
+            'name'  => 'Konyaspor',
+            'power' => 70,
+        ]);
+
+        $res->assertOk();
+        $this->assertCount(7, $res->json('teams'));
+        $this->assertEquals(0, $res->json('current_week'));
+        $this->assertDatabaseHas('teams', ['name' => 'Konyaspor', 'power' => 70]);
+    }
+
+    public function test_add_team_validates_input(): void
+    {
+        // empty name
+        $this->postJson('/api/league/team', ['name' => '', 'power' => 70])
+            ->assertStatus(422);
+
+        // duplicate name
+        $this->postJson('/api/league/team', ['name' => 'Galatasaray', 'power' => 70])
+            ->assertStatus(422);
+
+        // power out of range
+        $this->postJson('/api/league/team', ['name' => 'NewTeam', 'power' => 150])
+            ->assertStatus(422);
+    }
 }

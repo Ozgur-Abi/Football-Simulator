@@ -9,4 +9,5 @@ Route::prefix('league')->group(function () {
     Route::post('play-all',      [LeagueController::class, 'playAll']);
     Route::post('reset',         [LeagueController::class, 'reset']);
     Route::patch('match/{id}',   [LeagueController::class, 'editMatch']);
+    Route::post('team',          [LeagueController::class, 'addTeam']);
 });

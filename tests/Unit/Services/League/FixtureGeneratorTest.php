@@ -65,4 +65,31 @@ class FixtureGeneratorTest extends TestCase
         // 6 teams × 5 opponents × 2 legs = 30 unique pair strings
         $this->assertCount(30, array_unique($pairs));
     }
+
+    public function test_handles_odd_team_count(): void
+    {
+        // 5 teams: each team plays 4 opponents twice → 20 matches total.
+        // Round-robin with bye gives 5 weeks per leg → 10 weeks total.
+        // Each week has (n-1)/2 = 2 matches (one team byes).
+        $matches = $this->generator->generate($this->makeTeams(5));
+
+        $this->assertCount(20, $matches, '5 teams → 5*4 = 20 matches');
+
+        $weeks = array_unique(array_column($matches, 'week'));
+        $this->assertCount(10, $weeks, '5 teams → 10 weeks');
+
+        $byWeek = collect($matches)->groupBy('week');
+        foreach ($byWeek as $week => $weekMatches) {
+            $this->assertCount(2, $weekMatches, "Week $week should have 2 matches (one team byes)");
+        }
+
+        $pairs = array_map(fn ($m) => $m['home_team_id'].'-'.$m['away_team_id'], $matches);
+        $this->assertCount(20, array_unique($pairs), 'Each (home, away) pair appears exactly once');
+
+        // No team is paired with the BYE sentinel
+        foreach ($matches as $m) {
+            $this->assertNotEquals(0, $m['home_team_id']);
+            $this->assertNotEquals(0, $m['away_team_id']);
+        }
+    }
 }
