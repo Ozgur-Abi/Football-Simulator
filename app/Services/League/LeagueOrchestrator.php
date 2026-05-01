@@ -81,7 +81,7 @@ class LeagueOrchestrator
         $standings   = $this->standingsCalculator->calculate($teams, $matches);
 
         $predictions = null;
-        if ($currentWeek > 0 && $currentWeek >= $totalWeeks - 2) {
+        if ($currentWeek > 0) {
             $predictions = $this->predictor->predict($teams, $matches);
         }
 

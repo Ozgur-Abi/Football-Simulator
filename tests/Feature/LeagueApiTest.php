@@ -64,15 +64,9 @@ class LeagueApiTest extends TestCase
         ]);
     }
 
-    public function test_predictions_appear_in_last_3_weeks(): void
+    public function test_predictions_appear_after_first_week(): void
     {
-        // With 6 teams there are 10 weeks; predictions appear at week 8 (total_weeks - 2)
-        $totalWeeks = $this->getJson('/api/league/state')->json('total_weeks');
-        $threshold  = $totalWeeks - 2;
-
-        for ($i = 0; $i < $threshold; $i++) {
-            $this->postJson('/api/league/play-week');
-        }
+        $this->postJson('/api/league/play-week');
         $res = $this->getJson('/api/league/state');
         $res->assertOk();
         $this->assertNotNull($res->json('predictions'));
